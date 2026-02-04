@@ -1,0 +1,87 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "app-request-portal-customdomain",
+      "version": "1.0.0"
+    },
+    "description": "Adds a custom domain and SSL certificate to an existing App Request Portal deployment. IMPORTANT: DNS must be configured before running this template."
+  },
+  "parameters": {
+    "webAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of your existing Web App (e.g., web-apprequest-dev-abc123)"
+      }
+    },
+    "customDomain": {
+      "type": "string",
+      "metadata": {
+        "description": "Your custom domain (e.g., apps.yourdomain.com). DNS CNAME must already point to your App Service."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location for resources (should match your existing App Service)"
+      }
+    }
+  },
+  "variables": {
+    "certificateName": "[concat(parameters('webAppName'), '-', replace(parameters('customDomain'), '.', '-'), '-cert')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/sites/hostNameBindings",
+      "apiVersion": "2022-09-01",
+      "name": "[concat(parameters('webAppName'), '/', parameters('customDomain'))]",
+      "properties": {
+        "siteName": "[parameters('webAppName')]",
+        "hostNameType": "Verified"
+      }
+    },
+    {
+      "type": "Microsoft.Web/certificates",
+      "apiVersion": "2022-09-01",
+      "name": "[variables('certificateName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites/hostNameBindings', parameters('webAppName'), parameters('customDomain'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[reference(resourceId('Microsoft.Web/sites', parameters('webAppName')), '2022-09-01').serverFarmId]",
+        "canonicalName": "[parameters('customDomain')]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites/hostNameBindings",
+      "apiVersion": "2022-09-01",
+      "name": "[concat(parameters('webAppName'), '/', parameters('customDomain'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/certificates', variables('certificateName'))]"
+      ],
+      "properties": {
+        "siteName": "[parameters('webAppName')]",
+        "hostNameType": "Verified",
+        "sslState": "SniEnabled",
+        "thumbprint": "[reference(resourceId('Microsoft.Web/certificates', variables('certificateName'))).thumbprint]"
+      }
+    }
+  ],
+  "outputs": {
+    "customDomainUrl": {
+      "type": "string",
+      "value": "[concat('https://', parameters('customDomain'))]"
+    },
+    "certificateName": {
+      "type": "string",
+      "value": "[variables('certificateName')]"
+    },
+    "message": {
+      "type": "string",
+      "value": "Custom domain configured successfully! Remember to update your Azure AD App Registration redirect URIs."
+    }
+  }
+}
