@@ -9,7 +9,7 @@ A self-service app request solution for Microsoft Intune. Enable your users to b
 Click the button below to deploy the App Request Portal to your Azure subscription:
 
 <p>
-  <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FPowerStacks-BI%2FApp-Request-Portal-Releases%2Fmain%2Fazuredeploy.json">
+  <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FPowerStacks-BI%2FApp-Request-Portal-Releases%2Fmain%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FPowerStacks-BI%2FApp-Request-Portal-Releases%2Fmain%2FcreateUiDefinition.json">
     <img src="https://aka.ms/deploytoazurebutton" alt="Deploy to Azure">
   </a>
 </p>
