@@ -41,20 +41,8 @@
             "visible": true,
             "options": {
               "icon": "Info",
-              "text": "Enter the values from your Entra ID app registrations. You need two apps: an API application (backend) and a Frontend application (SPA)."
+              "text": "Enter the values from your Entra ID app registrations. You need two apps: an API application (backend) and a Frontend application (SPA). The tenant ID is automatically detected from your current session."
             }
-          },
-          {
-            "name": "tenantId",
-            "type": "Microsoft.Common.TextBox",
-            "label": "Tenant ID",
-            "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-            "constraints": {
-              "required": true,
-              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
-              "validationMessage": "Please enter a valid GUID (e.g., xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)"
-            },
-            "visible": true
           },
           {
             "name": "apiSection",
@@ -211,7 +199,6 @@
     "outputs": {
       "environmentName": "[basics('environmentName')]",
       "location": "[location()]",
-      "tenantId": "[steps('entraConfig').tenantId]",
       "apiClientId": "[steps('entraConfig').apiSection.apiClientId]",
       "apiClientSecret": "[steps('entraConfig').apiSection.apiClientSecret]",
       "frontendClientId": "[steps('entraConfig').frontendSection.frontendClientId]",
