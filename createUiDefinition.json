@@ -160,7 +160,7 @@
             "visible": true,
             "options": {
               "icon": "Info",
-              "text": "Optionally configure an Azure AD group for portal administrators. You can also configure this later through the Setup Wizard. Approver groups are configured per-app in the portal."
+              "text": "Configure an Azure AD group for portal administrators. If left empty, any authenticated user can access admin features until a group is configured via Settings. Approver groups are configured per-app."
             }
           },
           {
