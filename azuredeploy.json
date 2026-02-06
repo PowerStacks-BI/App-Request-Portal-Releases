@@ -78,7 +78,8 @@
     "sqlDatabaseName": "AppRequestPortal",
     "appInsightsName": "[concat('ai-apprequest-', parameters('environmentName'))]",
     "logAnalyticsName": "[concat('la-apprequest-', parameters('environmentName'))]",
-    "packageUrl": "[if(equals(parameters('packageVersion'), 'latest'), 'https://github.com/PowerStacks-BI/App-Request-Portal-Releases/releases/latest/download/AppRequestPortal.zip', concat('https://github.com/PowerStacks-BI/App-Request-Portal-Releases/releases/download/v', parameters('packageVersion'), '/AppRequestPortal-', parameters('packageVersion'), '.zip'))]"
+    "deploymentScriptName": "[concat('deploy-app-', parameters('environmentName'), '-', uniqueString(resourceGroup().id))]",
+    "packageUrl": "[if(equals(parameters('packageVersion'), 'latest'), 'https://github.com/PowerStacks-BI/App-Request-Portal-Releases/releases/latest/download/AppRequestPortal.zip', concat('https://github.com/PowerStacks-BI/App-Request-Portal-Releases/releases/download/v', parameters('packageVersion'), '/AppRequestPortal.zip'))]"
   },
   "resources": [
     {
@@ -226,13 +227,40 @@
             {
               "name": "FrontendSettings__ApiClientId",
               "value": "[parameters('apiClientId')]"
-            },
-            {
-              "name": "WEBSITE_RUN_FROM_PACKAGE",
-              "value": "[variables('packageUrl')]"
             }
           ]
         }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2023-08-01",
+      "name": "[variables('deploymentScriptName')]",
+      "location": "[parameters('location')]",
+      "kind": "AzureCLI",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('webAppName'))]"
+      ],
+      "properties": {
+        "azCliVersion": "2.50.0",
+        "timeout": "PT30M",
+        "retentionInterval": "PT1H",
+        "cleanupPreference": "OnSuccess",
+        "environmentVariables": [
+          {
+            "name": "WEBAPP_NAME",
+            "value": "[variables('webAppName')]"
+          },
+          {
+            "name": "RESOURCE_GROUP",
+            "value": "[resourceGroup().name]"
+          },
+          {
+            "name": "PACKAGE_URL",
+            "value": "[variables('packageUrl')]"
+          }
+        ],
+        "scriptContent": "#!/bin/bash\nset -e\n\necho \"Downloading application package from: $PACKAGE_URL\"\ncurl -L -o /tmp/app.zip \"$PACKAGE_URL\"\n\necho \"Package downloaded, size: $(stat -c%s /tmp/app.zip) bytes\"\n\necho \"Deploying to Azure App Service: $WEBAPP_NAME\"\naz webapp deployment source config-zip \\\n  --resource-group \"$RESOURCE_GROUP\" \\\n  --name \"$WEBAPP_NAME\" \\\n  --src /tmp/app.zip\n\necho \"Deployment complete!\"\n\n# Output results\necho \"{\\\"status\\\": \\\"success\\\", \\\"webapp\\\": \\\"$WEBAPP_NAME\\\"}\" > $AZ_SCRIPTS_OUTPUT_PATH"
       }
     }
   ],
@@ -252,6 +280,10 @@
     "appName": {
       "type": "string",
       "value": "[variables('webAppName')]"
+    },
+    "deploymentResult": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Resources/deploymentScripts', variables('deploymentScriptName'))).outputs]"
     },
     "nextSteps": {
       "type": "string",

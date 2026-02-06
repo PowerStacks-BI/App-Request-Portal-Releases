@@ -154,6 +154,17 @@ The user deploying the template must have:
 - **Owner** role on the target resource group, OR
 - **Contributor + User Access Administrator** roles
 
+### Resource provider registration
+
+Your subscription must have the following resource providers registered:
+- `Microsoft.AlertsManagement` (required for Application Insights)
+
+To check and register:
+1. Go to **Azure Portal** → **Subscriptions** → select your subscription
+2. Click **Resource providers** (under Settings)
+3. Search for `Microsoft.AlertsManagement`
+4. If not registered, select it and click **Register**
+
 ### Entra ID permissions
 
 The user creating the app registrations must be able to:
@@ -168,13 +179,13 @@ During deployment you will be prompted for:
 
 | Parameter | Description | Where to find it |
 |-----------|-------------|------------------|
-| **Tenant ID** | Your Azure AD tenant ID | API app → Overview |
 | **API Client ID** | Application ID of the backend app | API app → Overview |
 | **API Client Secret** | Secret value from the backend app | API app → Certificates & secrets |
 | **Frontend Client ID** | Application ID of the frontend app | Frontend app → Overview |
 | **SQL Admin Password** | Password for the SQL database | Create a strong password (12+ chars) |
-| **Admin Group ID** | (Optional) Azure AD group for admins | Azure AD → Groups → Object ID |
-| **Approver Group ID** | (Optional) Azure AD group for approvers | Azure AD → Groups → Object ID |
+| **Admin Group ID** | (Optional) Azure AD group for admins | Entra ID → Groups → Object ID |
+
+> **Note**: The Tenant ID is automatically detected from your Azure session.
 
 ---
 
@@ -182,7 +193,13 @@ During deployment you will be prompted for:
 
 ### 1. Copy the Portal URL
 
-From the **Deployment Outputs**, copy the **Portal URL** (e.g., `https://app-apprequest-prod-abc123.azurewebsites.net`)
+After the deployment completes, you need to find your portal URL:
+
+1. In the Azure Portal, you should see **"Your deployment is complete"**
+2. Click **Outputs** in the left sidebar (or click **Deployment details** then **Outputs**)
+3. Find **portalUrl** in the list and copy the value (e.g., `https://app-apprequest-prod-abc123.azurewebsites.net`)
+
+> **Tip**: If you navigated away, go to your **Resource Group** → **Deployments** → select the deployment → **Outputs**
 
 ### 2. Update the Frontend Redirect URI
 
