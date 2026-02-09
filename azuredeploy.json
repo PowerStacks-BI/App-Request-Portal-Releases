@@ -62,18 +62,11 @@
         "description": "SQL Server administrator password (min 12 characters, must include uppercase, lowercase, number, and special character)"
       }
     },
-    "repoUrl": {
+    "packageUrl": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "https://github.com/PowerStacks-BI/App-Request-Portal-Releases/releases/latest/download/AppRequestPortal.zip",
       "metadata": {
-        "description": "(Optional) GitHub repository URL for automatic code deployment. Leave empty to deploy infrastructure only."
-      }
-    },
-    "repoBranch": {
-      "type": "string",
-      "defaultValue": "main",
-      "metadata": {
-        "description": "The branch to deploy from (if repo URL is provided)"
+        "description": "URL to the application package ZIP file for deployment"
       }
     },
     "adminGroupId": {
@@ -144,7 +137,7 @@
     "sqlDatabaseName": "AppRequestPortal",
     "appInsightsName": "[concat('ai-apprequest-', parameters('environmentName'))]",
     "logAnalyticsName": "[concat('la-apprequest-', parameters('environmentName'))]",
-    "deployFromRepo": "[not(empty(parameters('repoUrl')))]",
+    "deployPackage": "[not(empty(parameters('packageUrl')))]",
     "skuTierMap": {
       "B1": "Basic",
       "B2": "Basic",
@@ -319,6 +312,10 @@
             {
               "name": "EmailSettings__PortalUrl",
               "value": "[concat('https://', variables('webAppName'), '.azurewebsites.net')]"
+            },
+            {
+              "name": "WEBSITE_RUN_FROM_PACKAGE",
+              "value": "[if(variables('deployPackage'), parameters('packageUrl'), '')]"
             }
           ]
         }
@@ -370,20 +367,6 @@
             }
           ]
         }
-      }
-    },
-    {
-      "condition": "[variables('deployFromRepo')]",
-      "type": "Microsoft.Web/sites/sourcecontrols",
-      "apiVersion": "2022-09-01",
-      "name": "[concat(variables('apiAppName'), '/web')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', variables('apiAppName'))]"
-      ],
-      "properties": {
-        "repoUrl": "[parameters('repoUrl')]",
-        "branch": "[parameters('repoBranch')]",
-        "isManualIntegration": true
       }
     }
   ],
