@@ -21,7 +21,7 @@
     "steps": [
       {
         "name": "authentication",
-        "label": "Authentication",
+        "label": "Entra ID Configuration",
         "elements": [
           {
             "name": "authInfo",
@@ -29,64 +29,66 @@
             "visible": true,
             "options": {
               "icon": "Info",
-              "text": "Enter the Azure AD App Registration details. You need two app registrations: one for the API (with client secret) and one for the Frontend SPA."
+              "text": "Enter the values from your Entra ID app registrations. You need two apps: an API application (backend) and a Frontend application (SPA). The tenant ID is automatically detected from your current session."
             }
           },
           {
-            "name": "tenantId",
-            "type": "Microsoft.Common.TextBox",
-            "label": "Azure AD Tenant ID",
-            "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-            "toolTip": "Your Azure AD tenant ID (found in Azure AD > Overview)",
-            "constraints": {
-              "required": true,
-              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
-              "validationMessage": "Must be a valid GUID"
-            }
+            "name": "apiSection",
+            "type": "Microsoft.Common.Section",
+            "label": "API Application (Backend)",
+            "elements": [
+              {
+                "name": "apiClientId",
+                "type": "Microsoft.Common.TextBox",
+                "label": "API Client ID",
+                "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                "toolTip": "Application (client) ID of the API app registration",
+                "constraints": {
+                  "required": true,
+                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                  "validationMessage": "Must be a valid GUID"
+                }
+              },
+              {
+                "name": "apiClientSecret",
+                "type": "Microsoft.Common.PasswordBox",
+                "label": {
+                  "password": "API Client Secret"
+                },
+                "toolTip": "Client secret from the API app registration",
+                "constraints": {
+                  "required": true
+                },
+                "options": {
+                  "hideConfirmation": true
+                }
+              }
+            ]
           },
           {
-            "name": "apiClientId",
-            "type": "Microsoft.Common.TextBox",
-            "label": "API Client ID",
-            "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-            "toolTip": "Application (client) ID of the API app registration",
-            "constraints": {
-              "required": true,
-              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
-              "validationMessage": "Must be a valid GUID"
-            }
-          },
-          {
-            "name": "apiClientSecret",
-            "type": "Microsoft.Common.PasswordBox",
-            "label": {
-              "password": "API Client Secret"
-            },
-            "toolTip": "Client secret from the API app registration",
-            "constraints": {
-              "required": true
-            },
-            "options": {
-              "hideConfirmation": true
-            }
-          },
-          {
-            "name": "frontendClientId",
-            "type": "Microsoft.Common.TextBox",
-            "label": "Frontend Client ID",
-            "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-            "toolTip": "Application (client) ID of the Frontend SPA app registration",
-            "constraints": {
-              "required": true,
-              "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
-              "validationMessage": "Must be a valid GUID"
-            }
+            "name": "frontendSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Frontend Application (SPA)",
+            "elements": [
+              {
+                "name": "frontendClientId",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Frontend Client ID",
+                "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                "toolTip": "Application (client) ID of the Frontend SPA app registration",
+                "constraints": {
+                  "required": true,
+                  "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                  "validationMessage": "Must be a valid GUID"
+                }
+              }
+            ]
           }
         ]
       },
       {
         "name": "database",
-        "label": "Database",
+        "label": "SQL Database",
         "elements": [
           {
             "name": "dbInfo",
@@ -126,86 +128,8 @@
         ]
       },
       {
-        "name": "authorization",
-        "label": "Authorization (Optional)",
-        "elements": [
-          {
-            "name": "authzInfo",
-            "type": "Microsoft.Common.InfoBox",
-            "visible": true,
-            "options": {
-              "icon": "Info",
-              "text": "Optionally restrict access using Azure AD security groups. Leave empty to allow all authenticated users."
-            }
-          },
-          {
-            "name": "adminGroupId",
-            "type": "Microsoft.Common.TextBox",
-            "label": "Admin Group ID (Optional)",
-            "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-            "toolTip": "Azure AD Group Object ID for administrators. Leave empty to allow all authenticated users admin access.",
-            "constraints": {
-              "required": false,
-              "regex": "^$|^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
-              "validationMessage": "Must be a valid GUID or empty"
-            }
-          },
-          {
-            "name": "approverGroupId",
-            "type": "Microsoft.Common.TextBox",
-            "label": "Approver Group ID (Optional)",
-            "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-            "toolTip": "Azure AD Group Object ID for approvers. Leave empty to allow all authenticated users to approve.",
-            "constraints": {
-              "required": false,
-              "regex": "^$|^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
-              "validationMessage": "Must be a valid GUID or empty"
-            }
-          }
-        ]
-      },
-      {
-        "name": "email",
-        "label": "Email (Optional)",
-        "elements": [
-          {
-            "name": "emailInfo",
-            "type": "Microsoft.Common.InfoBox",
-            "visible": true,
-            "options": {
-              "icon": "Info",
-              "text": "Optionally configure email notifications. Requires Mail.Send permission on the API app registration."
-            }
-          },
-          {
-            "name": "emailSendAsUserId",
-            "type": "Microsoft.Common.TextBox",
-            "label": "Send As User ID (Optional)",
-            "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-            "toolTip": "Azure AD User Object ID to send emails as. Leave empty to disable email notifications.",
-            "constraints": {
-              "required": false,
-              "regex": "^$|^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
-              "validationMessage": "Must be a valid GUID or empty"
-            }
-          },
-          {
-            "name": "emailFromAddress",
-            "type": "Microsoft.Common.TextBox",
-            "label": "From Email Address (Optional)",
-            "placeholder": "noreply@yourdomain.com",
-            "toolTip": "Email address shown in the From field. Should match the SendAsUserId's mailbox.",
-            "constraints": {
-              "required": false,
-              "regex": "^$|^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
-              "validationMessage": "Must be a valid email address or empty"
-            }
-          }
-        ]
-      },
-      {
         "name": "advanced",
-        "label": "Advanced (Optional)",
+        "label": "Advanced",
         "elements": [
           {
             "name": "advancedInfo",
@@ -271,16 +195,12 @@
     "outputs": {
       "environmentName": "prod",
       "location": "[location()]",
-      "tenantId": "[steps('authentication').tenantId]",
-      "apiClientId": "[steps('authentication').apiClientId]",
-      "apiClientSecret": "[steps('authentication').apiClientSecret]",
-      "frontendClientId": "[steps('authentication').frontendClientId]",
+      "tenantId": "[tenant().tenantId]",
+      "apiClientId": "[steps('authentication').apiSection.apiClientId]",
+      "apiClientSecret": "[steps('authentication').apiSection.apiClientSecret]",
+      "frontendClientId": "[steps('authentication').frontendSection.frontendClientId]",
       "sqlAdminLogin": "[steps('database').sqlAdminLogin]",
       "sqlAdminPassword": "[steps('database').sqlAdminPassword]",
-      "adminGroupId": "[steps('authorization').adminGroupId]",
-      "approverGroupId": "[steps('authorization').approverGroupId]",
-      "emailSendAsUserId": "[steps('email').emailSendAsUserId]",
-      "emailFromAddress": "[steps('email').emailFromAddress]",
       "appServicePlanSku": "[steps('advanced').appServicePlanSku]",
       "appServicePlanInstanceCount": "[steps('advanced').appServicePlanInstanceCount]",
       "enableAutoHeal": "[steps('advanced').enableAutoHeal]",
