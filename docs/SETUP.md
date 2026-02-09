@@ -1,0 +1,384 @@
+# App Request Portal - Setup Guide
+
+This guide walks you through setting up the App Request Portal from scratch.
+
+## Prerequisites
+
+- Azure subscription with appropriate permissions
+- Azure AD tenant with Global Administrator or Application Administrator role
+- .NET 8.0 SDK
+- Node.js 18+ and npm
+- Visual Studio 2022 or VS Code
+- Azure CLI installed
+- SQL Server (LocalDB, Express, or Developer Edition) or Azure SQL Database
+
+### Install Required .NET Tools
+
+Install the Entity Framework Core CLI tools:
+
+```powershell
+# Add NuGet source if not already configured
+dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
+
+# Install EF Core tools globally
+dotnet tool install --global dotnet-ef
+```
+
+## Step 1: Azure AD App Registrations
+
+You need to create two app registrations in Azure AD:
+
+### Backend API App Registration
+
+1. Navigate to Azure Portal > Azure Active Directory > App registrations
+2. Click "New registration"
+3. Name: `App Request Portal - API`
+4. Supported account types: "Accounts in this organizational directory only"
+5. Redirect URI: Leave empty for now
+6. Click "Register"
+
+7. Note the **Application (client) ID** and **Directory (tenant) ID**
+
+8. Configure API permissions:
+   - Click "API permissions" > "Add a permission"
+   - Select "Microsoft Graph" > "Application permissions"
+   - Add the following permissions:
+     - `DeviceManagementApps.Read.All` - Read Intune apps
+     - `DeviceManagementApps.ReadWrite.All` - Manage Intune apps and create assignments
+     - `DeviceManagementManagedDevices.Read.All` - Read user devices
+     - `Group.ReadWrite.All` - Create and manage security groups
+     - `User.Read.All` - Read user profiles
+     - `Directory.Read.All` - Read directory data
+     - `Mail.Send` - Send email notifications (optional, see Step 9)
+   - Click "Grant admin consent"
+
+   > **Note:** `DeviceManagementApps.ReadWrite.All` is required to automatically create Intune app assignments when apps are made visible in the portal.
+
+9. Create a client secret:
+   - Click "Certificates & secrets" > "New client secret"
+   - Description: `API Secret`
+   - Expires: Choose appropriate duration
+   - Click "Add"
+   - **Copy the secret value immediately** (you won't be able to see it again)
+
+10. Expose an API:
+    - Click "Expose an API" > "Add a scope"
+    - Application ID URI: Accept default or use `api://your-api-client-id`
+    - Scope name: `access_as_user`
+    - Who can consent: Admins and users
+    - Display name: `Access API as user`
+    - Description: `Allow the application to access the API as the signed-in user`
+    - Click "Add scope"
+
+### Frontend SPA App Registration
+
+1. Click "New registration"
+2. Name: `App Request Portal - Frontend`
+3. Supported account types: "Accounts in this organizational directory only"
+4. Redirect URI:
+   - Type: "Single-page application (SPA)"
+   - URI: `http://localhost:3000`
+5. Click "Register"
+
+6. Note the **Application (client) ID**
+
+7. Configure API permissions:
+   - Click "API permissions" > "Add a permission"
+   - Select "APIs my organization uses" > Select your backend API app
+   - Check `access_as_user`
+   - Click "Add permissions"
+   - Also add "Microsoft Graph" > "Delegated permissions" > `User.Read`
+   - Click "Grant admin consent"
+
+8. Configure authentication:
+   - Click "Authentication"
+   - Settings
+   - Under "Implicit grant and hybrid flows", check:
+     - Access tokens
+     - ID tokens
+   - Click "Save"
+
+## Step 2: Configure Application Settings
+
+### Backend API Configuration
+
+1. Open [AppRequestPortal/src/AppRequestPortal.API/appsettings.json](../src/AppRequestPortal.API/appsettings.json)
+
+2. Update the following values:
+```json
+{
+  "AzureAd": {
+    "Instance": "https://login.microsoftonline.com/",
+    "Domain": "yourdomain.onmicrosoft.com",
+    "TenantId": "your-tenant-id",
+    "ClientId": "your-api-client-id",
+    "ClientSecret": "your-client-secret"
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=your-sql-server;Database=AppRequestPortal;..."
+  }
+}
+```
+
+### Frontend Configuration
+
+1. Copy [AppRequestPortal/src/AppRequestPortal.Web/.env.example](../src/AppRequestPortal.Web/.env.example) to `.env`
+
+2. Update the values:
+```
+REACT_APP_CLIENT_ID=your-frontend-client-id
+REACT_APP_TENANT_ID=your-tenant-id
+REACT_APP_API_CLIENT_ID=your-api-client-id
+REACT_APP_REDIRECT_URI=http://localhost:3000
+REACT_APP_API_URL=https://localhost:7001/api
+```
+
+## Step 3: Database Setup
+
+1. Ensure you have SQL Server running locally or use Azure SQL Database
+   - **LocalDB** (included with Visual Studio): Connection string uses `(localdb)\MSSQLLocalDB`
+   - **SQL Server Express**: Connection string uses `localhost\SQLEXPRESS`
+   - **Azure SQL**: Use the full server FQDN from Azure Portal
+
+2. Update the connection string in [appsettings.json](../src/AppRequestPortal.API/appsettings.json)
+
+   Example for LocalDB:
+   ```json
+   "ConnectionStrings": {
+     "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=AppRequestPortal;Trusted_Connection=True;MultipleActiveResultSets=true"
+   }
+   ```
+
+3. Restore NuGet packages:
+```powershell
+cd src/AppRequestPortal.API
+dotnet restore
+```
+
+4. Run database migrations (from the API project directory):
+```powershell
+dotnet ef migrations add InitialCreate --project ../AppRequestPortal.Infrastructure --startup-project .
+dotnet ef database update --project ../AppRequestPortal.Infrastructure --startup-project .
+```
+
+> **Note:** The `--project` flag points to where the DbContext lives (Infrastructure), and `--startup-project` points to the API project which has the configuration.
+
+## Step 4: Run the Application Locally
+
+### Start the Backend API
+
+```powershell
+cd src/AppRequestPortal.API
+dotnet restore
+dotnet run
+```
+
+The API will be available at `https://localhost:7001`
+
+### Start the Frontend
+
+```powershell
+cd src/AppRequestPortal.Web
+npm install
+npm start
+```
+
+The web app will be available at `http://localhost:3000`
+
+## Step 5: Test the Application
+
+1. Navigate to `http://localhost:3000`
+2. Click "Sign In with Microsoft"
+3. Authenticate with your Azure AD account
+4. You should see the home page
+
+## Step 6: Configure Admin Access
+
+The portal uses Azure AD security groups to control administrative access. You can configure these through the web UI or in configuration files.
+
+### Create Security Groups
+
+1. Navigate to Azure Portal > Azure Active Directory > Groups
+2. Create a new security group:
+   - Group type: **Security**
+   - Group name: `AppPortal-Admins` (or your preferred name)
+   - Group description: `Administrators for the App Request Portal`
+   - Membership type: **Assigned**
+3. Click **Create**
+4. Add users who should have admin access to this group
+5. Copy the **Object ID** of the group (found on the group's Overview page)
+
+### Option A: Configure via Portal Settings UI (Recommended)
+
+Once you have admin access to the portal:
+
+1. Navigate to **Admin** > **Settings** tab
+2. Under **Group-Based Authorization**:
+   - Enter the **Admin Group** Object ID
+   - Enter the **Approver Group** Object ID
+3. Under **App Deployment Settings**:
+   - Set the **Group Name Prefix** (default: `AppPortal-`) - this prefix is used when auto-creating Azure AD security groups for app deployments
+4. Click **Save Settings**
+
+See [ADMIN-GUIDE.md](ADMIN-GUIDE.md) for detailed instructions on using the Portal Settings UI.
+
+### Option B: Configure via appsettings.json
+
+Alternatively, update [appsettings.json](../src/AppRequestPortal.API/appsettings.json) with the group Object ID:
+
+```json
+{
+  "AppSettings": {
+    "AdminGroupId": "your-admin-group-object-id",
+    "ApproverGroupId": "your-approver-group-object-id"
+  }
+}
+```
+
+**Configuration options:**
+
+| Setting | Description |
+|---------|-------------|
+| `AdminGroupId` | Object ID of the Azure AD group for administrators. Admins can sync apps from Intune and manage all settings. |
+| `ApproverGroupId` | Object ID of the Azure AD group for approvers. Approvers can approve/reject app requests. |
+
+> **Note:** If both settings are left empty, all authenticated users can access admin functions. This is useful for development but should not be used in production.
+
+You can use the same group for both settings, or create separate groups for more granular control.
+
+### App Deployment Settings
+
+The portal automatically creates Azure AD security groups and Intune app assignments when apps are made visible. Configure the group naming:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `GroupNamePrefix` | `AppPortal-` | Prefix for auto-created security groups. Groups are named `{prefix}{AppName}-Required`. |
+
+This setting is configured via the Portal Settings UI (Admin > Settings > App Deployment Settings).
+
+> **Tip:** Settings configured in the UI take precedence over appsettings.json values. The initial values from appsettings.json are used to seed the database on first run
+
+## Step 7: Deploy to Azure
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
+
+## Troubleshooting
+
+### Authentication Issues
+
+- Verify that all Azure AD app registration settings are correct
+- Ensure client IDs and tenant IDs match in configuration files
+- Check that admin consent has been granted for all required permissions
+
+### API Connection Issues
+
+- Verify the API URL in the frontend configuration
+- Check CORS settings in the API
+- Ensure the API is running and accessible
+
+### Database Issues
+
+- Verify the connection string is correct
+- Ensure the SQL Server is running and accessible
+- Check that migrations have been applied
+
+### Graph API Permissions
+
+- Ensure admin consent has been granted for all required permissions
+- Verify the client secret is valid and not expired
+- Check that the managed identity (when deployed to Azure) has appropriate permissions
+
+## Step 8: Configure Approval Workflows
+
+The portal supports flexible per-app approval workflows. See [APPROVAL-WORKFLOWS.md](APPROVAL-WORKFLOWS.md) for detailed configuration options including:
+
+- Manager approval requirements
+- Linear workflows (specific users approve in sequence)
+- Pooled workflows (any member of a group can approve at each stage)
+- Multi-stage approval chains
+
+## Step 9: Configure Email Notifications (Optional)
+
+The portal can send email notifications for:
+- Request submitted confirmations
+- Approval required notifications to approvers
+- Request approved/rejected notifications to requestors
+
+### Prerequisites
+
+1. **Mail.Send permission** must be added to your API app registration (see Step 1, item 8)
+2. A **user mailbox or shared mailbox** to send emails from
+
+### Add Mail.Send Permission
+
+If you didn't add it during initial setup:
+
+1. Navigate to Azure Portal > Azure Active Directory > App registrations
+2. Select your **backend API** app registration
+3. Click "API permissions" > "Add a permission"
+4. Select "Microsoft Graph" > "Application permissions"
+5. Search for `Mail.Send` and check it
+6. Click "Add permissions"
+7. Click **"Grant admin consent for [your tenant]"** (requires Global Admin or Privileged Role Administrator)
+
+### Get the User Object ID
+
+You need the Object ID of the user or shared mailbox that will send emails:
+
+1. Navigate to Azure Portal > Azure Active Directory > Users
+2. Search for and select the user (or shared mailbox)
+3. Copy the **Object ID** from the Overview page
+
+> **Tip:** You can create a dedicated shared mailbox like `apprequest-noreply@yourdomain.com` for this purpose.
+
+### Option A: Configure via Portal Settings UI (Recommended)
+
+1. Navigate to **Admin** > **Settings** tab
+2. Under **Email Notifications**:
+   - Toggle **Enable email notifications** on
+   - Enter the **Send As User ID** (Object ID of mailbox)
+   - Enter the **From Address** (email address)
+   - Enter the **Portal URL** (for email links)
+3. Click **Save Settings**
+
+### Option B: Configure via appsettings.json
+
+Update [appsettings.json](../src/AppRequestPortal.API/appsettings.json):
+
+```json
+{
+  "EmailSettings": {
+    "SendAsUserId": "user-object-id-here",
+    "FromAddress": "apprequest-noreply@yourdomain.com",
+    "PortalUrl": "https://your-portal-url.com"
+  }
+}
+```
+
+| Setting | Description |
+|---------|-------------|
+| `SendAsUserId` | The Object ID of the user or shared mailbox to send emails from. If empty, email notifications are disabled. |
+| `FromAddress` | The email address shown in the From field (should match the mailbox). |
+| `PortalUrl` | The URL of your portal, used for links in email notifications.
+
+> **Tip:** Settings configured in the UI take precedence over appsettings.json values |
+
+### Test Email Notifications
+
+1. Submit an app request
+2. Check that the requestor receives a confirmation email
+3. Check that approvers receive an approval request email
+4. Approve or reject the request and verify the requestor receives the result notification
+
+### Troubleshooting Email Issues
+
+- **403 Forbidden**: Ensure `Mail.Send` permission has admin consent granted
+- **User not found**: Verify the `SendAsUserId` is a valid Object ID
+- **Email not sent**: Check the API logs for detailed error messages
+
+## Next Steps
+
+- Read the [Admin Guide](ADMIN-GUIDE.md) to learn how to configure the portal through the web UI
+- Configure Conditional Access policies for enhanced security
+- Set up Azure Monitor and Application Insights for monitoring
+- Customize the UI to match your organization's branding
