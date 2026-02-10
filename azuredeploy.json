@@ -137,6 +137,7 @@
     "appInsightsName": "[concat('ai-apprequest-', parameters('environmentName'))]",
     "logAnalyticsName": "[concat('la-apprequest-', parameters('environmentName'))]",
     "deployPackage": "[not(empty(parameters('packageUrl')))]",
+    "websiteContributorRoleId": "de139f84-1756-47ae-9be6-808fbbe84772",
     "skuTierMap": {
       "B1": "Basic",
       "B2": "Basic",
@@ -322,6 +323,20 @@
             }
           ]
         }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceId('Microsoft.Web/sites', variables('appName')), variables('websiteContributorRoleId'))]",
+      "scope": "[concat('Microsoft.Web/sites/', variables('appName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('appName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('websiteContributorRoleId'))]",
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('appName')), '2022-09-01', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal"
       }
     }
   ],
