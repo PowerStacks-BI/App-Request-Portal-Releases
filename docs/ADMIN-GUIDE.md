@@ -10,12 +10,13 @@ After initial deployment and Azure AD configuration (see [SETUP.md](SETUP.md)), 
 
 1. Sign in to the portal with an account that is a member of the Admin Group
 2. Click **Admin** in the navigation menu
-3. You'll see five tabs:
+3. You'll see six tabs:
    - **App Management** - Manage apps synced from Intune
    - **Pending Approvals** - Review and approve/reject requests
    - **Settings** - Configure portal-wide options
    - **Branding** - Customize portal appearance
    - **Winget Catalog** - Browse and publish apps from Winget
+   - **Reports** - View analytics, trends, and deployment status
 
 ### Setup Wizard
 
@@ -616,6 +617,138 @@ Users can request apps in two ways:
 ### My Requests
 
 Users can view their request history by clicking **My Requests** in the navigation. This shows all requests they've submitted with current status.
+
+## Reports & Analytics
+
+The Admin Dashboard includes comprehensive reporting capabilities to help you understand app request patterns and deployment status.
+
+### Accessing Reports
+
+1. Navigate to **Admin** in the navigation menu
+2. The dashboard displays summary tiles at the top
+3. Use the tabs to navigate between report views:
+   - **Summary** - Overview statistics with install status
+   - **Trends** - Visual charts showing request patterns over time
+   - **By Person** - Detailed request history by user
+   - **Install Status** - Deployment status for approved requests
+
+### Summary Dashboard
+
+The Summary view shows key metrics as clickable tiles:
+
+| Tile | Description |
+|------|-------------|
+| **Total Requests** | Total number of app requests in the system |
+| **Pending** | Requests awaiting approval |
+| **Approved** | Requests that have been approved |
+| **Rejected** | Requests that were rejected |
+| **Pending Install** | Approved requests waiting for Intune deployment |
+| **Installing** | Apps currently being installed on devices |
+| **Installed** | Successfully deployed apps |
+| **Install Failed** | Apps that failed to install |
+
+The install status tiles (Pending Install, Installing, Installed, Install Failed) are color-coded for quick identification:
+- **Pending Install** (blue) - Deployment pending
+- **Installing** (orange) - Installation in progress
+- **Installed** (green) - Successfully deployed
+- **Install Failed** (red) - Deployment failed
+
+### Trends Tab
+
+The Trends tab provides visual analytics to help identify patterns and popular applications.
+
+#### Request Trends Chart
+
+The main trends chart shows:
+- **Requested** (blue line) - Number of new requests per day
+- **Completed** (green line) - Number of completed requests per day
+- Visual area fills under each line for easy comparison
+
+Use the time range dropdown to view:
+- Last 7 days
+- Last 14 days
+- Last 30 days
+- Last 90 days
+
+#### Top Requested Apps
+
+A horizontal bar chart showing the most frequently requested applications, helping you identify:
+- Popular apps that might benefit from auto-approval
+- Apps that may need better visibility or promotion
+- Patterns in user requests
+
+#### Status Distribution
+
+A breakdown showing the distribution of request statuses:
+- Total count and percentage for each status
+- Visual progress bars for comparison
+- Separate sections for request status and install status
+
+### Install Status Tracking
+
+The portal automatically tracks the deployment status of approved requests for Intune apps.
+
+#### How It Works
+
+1. **Initial Status**: When a request is approved for an Intune-managed app, the install status is set to "Pending Install"
+2. **Background Polling**: A background service checks Intune for deployment status every 15 minutes
+3. **Status Updates**: The portal updates the install status based on Intune's reported deployment state
+4. **Final Status**: Once installed (or failed), the status stops being polled
+
+#### Install Status Values
+
+| Status | Description |
+|--------|-------------|
+| **Not Applicable** | App is not tracked for install status (e.g., Winget apps) |
+| **Pending Install** | Request approved, waiting for Intune to begin deployment |
+| **Installing** | Intune is actively installing the app on the device |
+| **Installed** | App successfully installed and detected on the device |
+| **Install Failed** | Installation failed - check the error message for details |
+| **Uninstalled** | App was installed but has since been removed |
+
+#### Viewing Install Status
+
+**Admin Dashboard:**
+1. Go to **Admin** > Reports section
+2. View install status counts in the summary tiles
+3. Click on any status tile to filter by that status
+4. Use the **Install Status** tab for detailed view
+
+**Install Status Tab:**
+The dedicated Install Status tab shows:
+- Summary counts for each install state
+- List of all requests with their current install status
+- Last checked timestamp for each request
+- Error messages for failed installations
+
+#### Troubleshooting Install Status
+
+**Status stuck on "Pending Install":**
+- Verify the device is online and connected to Intune
+- Check that the user/device is correctly added to the target AAD group
+- Review Intune device sync status in the Intune admin center
+
+**Status shows "Install Failed":**
+- Check the error message in the Install Status column
+- Common issues:
+  - Disk space insufficient
+  - App dependencies not met
+  - User cancelled the installation
+  - Device compliance issues blocking deployment
+
+**Status not updating:**
+- The polling service runs every 15 minutes
+- Check API logs for any errors in the InstallStatusPollingService
+- Verify the app registration has `DeviceManagementApps.Read.All` permission
+
+### By Person Report
+
+The **By Person** tab allows you to search for a specific user and view all their app requests:
+
+1. Enter a user's name or email in the search box
+2. View their complete request history
+3. See status, install status, and timestamps for each request
+4. Use the **Retry** button on failed requests to re-attempt group membership
 
 ## Best Practices
 
