@@ -140,6 +140,7 @@
   "variables": {
     "appServicePlanName": "[concat('asp-apprequest-', parameters('environmentName'))]",
     "appName": "[concat('apprequest-', parameters('environmentName'), '-', uniqueString(resourceGroup().id))]",
+    "storageAccountName": "[concat('stappreq', uniqueString(resourceGroup().id))]",
     "sqlServerName": "[concat('sql-apprequest-', parameters('environmentName'), '-', uniqueString(resourceGroup().id))]",
     "sqlDatabaseName": "AppRequestPortal",
     "appInsightsName": "[concat('ai-apprequest-', parameters('environmentName'))]",
@@ -248,6 +249,22 @@
       }
     },
     {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-01-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "accessTier": "Hot",
+        "supportsHttpsTrafficOnly": true,
+        "minimumTlsVersion": "TLS1_2",
+        "allowBlobPublicAccess": false
+      }
+    },
+    {
       "type": "Microsoft.Web/sites",
       "apiVersion": "2022-09-01",
       "name": "[variables('appName')]",
@@ -256,7 +273,8 @@
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
         "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]",
-        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]"
+        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ],
       "identity": {
         "type": "SystemAssigned"
@@ -329,6 +347,10 @@
             {
               "name": "WEBSITE_RUN_FROM_PACKAGE",
               "value": "[variables('packageUrl')]"
+            },
+            {
+              "name": "AzureStorage__ConnectionString",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2023-01-01').keys[0].value, ';EndpointSuffix=core.windows.net')]"
             }
           ]
         }
@@ -373,6 +395,10 @@
     "deployedPackageUrl": {
       "type": "string",
       "value": "[variables('packageUrl')]"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "value": "[variables('storageAccountName')]"
     }
   }
 }
