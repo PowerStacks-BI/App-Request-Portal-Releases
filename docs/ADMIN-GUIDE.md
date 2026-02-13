@@ -59,6 +59,70 @@ Configure how the portal sends email notifications for request submissions and a
 
 > **Note:** The app registration must have the `Mail.Send` Microsoft Graph permission with admin consent granted.
 
+### Microsoft Teams Notifications
+
+Send notifications to a Microsoft Teams channel when app requests are submitted, approved, or rejected. This uses Teams Incoming Webhooks for simple, secure integration.
+
+| Setting | Description |
+|---------|-------------|
+| **Enable Teams notifications** | Toggle to turn Teams channel notifications on or off |
+| **Webhook URL** | The Incoming Webhook URL from your Teams channel |
+| **Test** | Send a test notification to verify the webhook is configured correctly |
+| **New request submitted** | Notify the channel when a new app request is submitted |
+| **Request approved** | Notify the channel when a request is approved |
+| **Request rejected** | Notify the channel when a request is rejected |
+
+#### Setting Up Teams Notifications
+
+**Step 1: Create a Teams Channel (or use existing)**
+
+1. Open **Microsoft Teams**
+2. Navigate to the Team where you want notifications
+3. Create a new channel (e.g., "App Approvals") or use an existing one
+4. Ensure approvers/admins who need to see notifications are members of this channel
+
+**Step 2: Add an Incoming Webhook Connector**
+
+1. In Teams, right-click the channel name and select **Manage channel**
+2. Click the **Connectors** tab (or **Edit** > **Connectors** in newer versions)
+3. Search for **Incoming Webhook** and click **Configure**
+4. Enter a name (e.g., "App Request Portal") - this name appears on notifications
+5. Optionally upload a custom icon for the webhook
+6. Click **Create**
+7. **Copy the webhook URL** - you'll need this for the portal settings
+
+> **Important:** The webhook URL is a secret. Anyone with this URL can post to your channel. Store it securely and don't commit it to source control.
+
+**Step 3: Configure the Portal**
+
+1. Go to **Admin** > **Settings** tab
+2. Scroll to **Microsoft Teams Notifications**
+3. Enable **Enable Teams notifications**
+4. Paste the webhook URL in the **Webhook URL** field
+5. Click **Test** to verify the connection - you should see a test message in Teams
+6. Configure which events should trigger notifications
+7. Click **Save Settings**
+
+#### How It Works
+
+- Notifications are sent as **Adaptive Cards** - rich, formatted messages in Teams
+- Each notification includes:
+  - Title (e.g., "New App Request Submitted")
+  - Requestor name and email
+  - App name and publisher
+  - Timestamp
+  - Action button linking to the portal
+- The notification appears to come from the webhook connector name you configured
+- Everyone in the Teams channel sees the notification
+
+#### Limitations
+
+- **Channel-based only**: Notifications go to a channel, not direct messages to individuals
+- **One-way**: Users cannot approve/reject directly from Teams - they click through to the portal
+- **Single channel**: All notification types go to the same channel (the configured webhook)
+
+> **Tip:** For a dedicated approvals workflow, create a private channel with only approvers as members, and use that channel's webhook URL.
+
 ### Group-Based Authorization
 
 Control who has admin and approver access to the portal.
