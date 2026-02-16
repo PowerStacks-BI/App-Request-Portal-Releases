@@ -60,7 +60,7 @@ The deployment creates the following Azure resources:
 
 ### Winget Integration
 - **Winget Package Browser** - Browse and publish apps from the Windows Package Manager catalog to Intune
-- **Auto-Update Detection** - Automatically detect available updates for Winget-sourced apps
+- **Automatic Updates** - Detect and apply Winget package updates to Intune apps with one click
 - **Version History & Rollback** - Track app versions and rollback to previous versions if needed
 - **Bulk Publishing** - Publish multiple Winget packages to Intune in one operation
 
