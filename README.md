@@ -47,8 +47,10 @@ The deployment creates the following Azure resources:
 
 - **Self-Service App Catalog** - Users browse and request apps from your Intune library
 - **Approval Workflows** - Configurable multi-stage approvals with manager and group-based routing
+- **Actionable Email Notifications** - Approve/reject directly from email without visiting the portal (Office 365 MessageCard format)
+- **Auto-Escalation** - Automatically escalate stale approval requests with configurable thresholds
+- **Per-App Acknowledgments** - Require users to acknowledge terms before requesting specific apps
 - **Automatic Group Management** - Creates Azure AD groups and Intune assignments automatically
-- **Email Notifications** - Notify requesters and approvers at each workflow stage
 - **Dark Mode** - Admin-configurable with user override option
 - **Reports & Analytics** - ROI calculator, usage reports, and approval metrics
 - **Branding** - Customize logo, colors, and text to match your organization
