@@ -27,25 +27,25 @@
       "type": "string",
       "defaultValue": "[tenant().tenantId]",
       "metadata": {
-        "description": "The Azure AD tenant ID for authentication (auto-detected from deployment context)"
+        "description": "The Entra ID tenant ID for authentication (auto-detected from deployment context)"
       }
     },
     "apiClientId": {
       "type": "string",
       "metadata": {
-        "description": "The Azure AD application (client) ID for the API"
+        "description": "The Entra ID application (client) ID for the API"
       }
     },
     "apiClientSecret": {
       "type": "securestring",
       "metadata": {
-        "description": "The Azure AD client secret for the API application"
+        "description": "The Entra ID client secret for the API application"
       }
     },
     "frontendClientId": {
       "type": "string",
       "metadata": {
-        "description": "The Azure AD application (client) ID for the frontend SPA"
+        "description": "The Entra ID application (client) ID for the frontend SPA"
       }
     },
     "sqlAdminLogin": {
@@ -64,38 +64,31 @@
     },
     "releaseChannel": {
       "type": "string",
-      "defaultValue": "stable",
-      "allowedValues": ["stable", "beta", "custom"],
+      "defaultValue": "Latest",
+      "allowedValues": ["Latest", "Staging"],
       "metadata": {
-        "description": "Release channel: 'stable' for production-ready releases, 'beta' for preview features, 'custom' to specify a version"
-      }
-    },
-    "customVersion": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "(Only used when releaseChannel is 'custom') Specific version to deploy (e.g., '1.1.0', '1.2.0-beta.1'). Leave empty for latest stable."
+        "description": "Release channel: 'Latest' for stable production releases, 'Staging' for preview/beta features"
       }
     },
     "adminGroupId": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "(Optional) Azure AD group Object ID for administrators. Leave empty to allow all authenticated users."
+        "description": "(Optional) Entra ID group Object ID for administrators. Leave empty to allow all authenticated users."
       }
     },
     "approverGroupId": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "(Optional) Azure AD group Object ID for approvers. Leave empty to allow all authenticated users."
+        "description": "(Optional) Entra ID group Object ID for approvers. Leave empty to allow all authenticated users."
       }
     },
     "emailSendAsUserId": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "(Optional) Azure AD User Object ID to send emails as. Leave empty to disable email notifications."
+        "description": "(Optional) Entra ID User Object ID to send emails as. Leave empty to disable email notifications."
       }
     },
     "emailFromAddress": {
@@ -135,6 +128,22 @@
       "metadata": {
         "description": "Enable Health Check monitoring (FREE - recommended, requires 2+ instances for full benefit)"
       }
+    },
+    "storageRedundancy": {
+      "type": "string",
+      "defaultValue": "Standard_GRS",
+      "allowedValues": ["Standard_LRS", "Standard_GRS", "Standard_RAGRS"],
+      "metadata": {
+        "description": "Storage redundancy: LRS (local only, cheapest), GRS (geo-redundant, recommended), RAGRS (read-access geo-redundant)"
+      }
+    },
+    "sqlBackupRedundancy": {
+      "type": "string",
+      "defaultValue": "Geo",
+      "allowedValues": ["Local", "Geo"],
+      "metadata": {
+        "description": "SQL backup storage redundancy: Local (single region) or Geo (cross-region, recommended for DR)"
+      }
     }
   },
   "variables": {
@@ -147,10 +156,9 @@
     "logAnalyticsName": "[concat('la-apprequest-', parameters('environmentName'))]",
     "keyVaultName": "[concat('kv-appreq-', uniqueString(resourceGroup().id))]",
     "releasesBaseUrl": "https://github.com/PowerStacks-BI/App-Request-Portal-Releases/releases",
-    "stablePackageUrl": "[concat(variables('releasesBaseUrl'), '/latest/download/AppRequestPortal.zip')]",
-    "betaPackageUrl": "[concat(variables('releasesBaseUrl'), '/download/beta/AppRequestPortal.zip')]",
-    "customPackageUrl": "[if(empty(parameters('customVersion')), variables('stablePackageUrl'), concat(variables('releasesBaseUrl'), '/download/v', parameters('customVersion'), '/AppRequestPortal.zip'))]",
-    "packageUrl": "[if(equals(parameters('releaseChannel'), 'stable'), variables('stablePackageUrl'), if(equals(parameters('releaseChannel'), 'beta'), variables('betaPackageUrl'), variables('customPackageUrl')))]",
+    "latestPackageUrl": "[concat(variables('releasesBaseUrl'), '/latest/download/AppRequestPortal.zip')]",
+    "stagingPackageUrl": "[concat(variables('releasesBaseUrl'), '/download/staging/AppRequestPortal.zip')]",
+    "packageUrl": "[if(equals(parameters('releaseChannel'), 'Latest'), variables('latestPackageUrl'), variables('stagingPackageUrl'))]",
     "deployPackage": true,
     "websiteContributorRoleId": "de139f84-1756-47ae-9be6-808fbbe84772",
     "skuTierMap": {
@@ -234,7 +242,8 @@
       },
       "properties": {
         "collation": "SQL_Latin1_General_CP1_CI_AS",
-        "maxSizeBytes": 2147483648
+        "maxSizeBytes": 2147483648,
+        "requestedBackupStorageRedundancy": "[parameters('sqlBackupRedundancy')]"
       }
     },
     {
@@ -255,7 +264,7 @@
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "Standard_LRS"
+        "name": "[parameters('storageRedundancy')]"
       },
       "kind": "StorageV2",
       "properties": {

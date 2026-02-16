@@ -4,7 +4,7 @@ This guide walks administrators through setting up and managing the App Request 
 
 ## Getting Started
 
-After initial deployment and Azure AD configuration (see [SETUP.md](SETUP.md)), most portal configuration can be done directly through the Admin Dashboard.
+After initial deployment and Entra ID configuration (see [SETUP.md](SETUP.md)), most portal configuration can be done directly through the Admin Dashboard.
 
 ### Accessing the Admin Dashboard
 
@@ -27,7 +27,7 @@ For first-time setup or to reconfigure the portal, use the **Setup Wizard**:
 3. Follow the guided steps:
    - **Welcome** - Overview of setup steps
    - **License** - Enter and validate your PowerStacks license key
-   - **Access Groups** - Configure Admin and Approver Azure AD groups
+   - **Access Groups** - Configure Admin and Approver Entra ID groups
    - **Email Notifications** - Set up email settings for notifications
    - **Sync Apps** - Import apps from your Intune tenant
 
@@ -53,7 +53,7 @@ Configure how the portal sends email notifications for request submissions and a
 | Setting | Description |
 |---------|-------------|
 | **Enable email notifications** | Toggle to turn email notifications on or off |
-| **Send As User ID** | The Azure AD Object ID of the user or shared mailbox that will send emails. Find this in Azure Portal > Azure AD > Users > [select user] > Object ID |
+| **Send As User ID** | The Entra ID Object ID of the user or shared mailbox that will send emails. Find this in Azure Portal > Entra ID > Users > [select user] > Object ID |
 | **From Address** | The email address displayed in the From field (should match the mailbox) |
 | **Portal URL** | The URL of your portal, used in email links to direct users back to the portal |
 
@@ -129,8 +129,8 @@ Control who has admin and approver access to the portal.
 
 | Setting | Description |
 |---------|-------------|
-| **Admin Group** | Azure AD group Object ID. Members have full admin access to sync apps, manage settings, and view all requests |
-| **Approver Group** | Azure AD group Object ID. Members can approve/reject requests (in addition to workflow-specific approvers) |
+| **Admin Group** | Entra ID group Object ID. Members have full admin access to sync apps, manage settings, and view all requests |
+| **Approver Group** | Entra ID group Object ID. Members can approve/reject requests (in addition to workflow-specific approvers) |
 
 > **Tip:** Leave these empty during development to allow all authenticated users admin access. For production, always configure security groups.
 
@@ -145,7 +145,7 @@ This ensures users can only request apps from trusted, compliant devices.
 #### Prerequisites
 
 Before creating the policy:
-1. You must have **Azure AD Premium P1** or **P2** license (or Microsoft 365 E3/E5, etc.)
+1. You must have **Entra ID Premium P1** or **P2** license (or Microsoft 365 E3/E5, etc.)
 2. You need the **Conditional Access Administrator** or **Global Administrator** role
 3. Have at least one compliance policy configured in Intune
 
@@ -255,7 +255,7 @@ If you need to allow browser access from unmanaged devices (less secure), you ca
 | Setting | Description |
 |---------|-------------|
 | **Require manager approval by default** | When enabled, new approval workflows include manager approval as the first stage |
-| **Auto-create Azure AD groups** | Automatically create a security group when an app doesn't have a target group configured |
+| **Auto-create Entra ID groups** | Automatically create a security group when an app doesn't have a target group configured |
 
 ### Version & Updates
 
@@ -401,7 +401,7 @@ This creates a professional look where the center content draws focus while the 
 
 | Setting | Description |
 |---------|-------------|
-| **Group Name Prefix** | Prefix used when auto-creating Azure AD groups (default: `AppPortal-`). Groups are named `{prefix}{AppName}-Required`. Use this to identify portal-managed groups in your tenant. |
+| **Group Name Prefix** | Prefix used when auto-creating Entra ID groups (default: `AppPortal-`). Groups are named `{prefix}{AppName}-Required`. Use this to identify portal-managed groups in your tenant. |
 
 ### Custom Domain Configuration
 
@@ -428,7 +428,7 @@ Before configuring a custom domain:
 
 Once your custom domain is configured:
 
-1. **Update Azure AD Redirect URIs** - Add your custom domain URLs to your App Registration
+1. **Update Entra ID Redirect URIs** - Add your custom domain URLs to your App Registration
 2. **Update Portal URL** - In Settings > Email Notifications, update the Portal URL to use your custom domain
 3. **Test Authentication** - Sign out and sign back in to verify authentication works
 
@@ -490,7 +490,7 @@ Use this to control which Intune apps are available for self-service requests. A
 
 When you toggle an app's visibility to **Yes** for the first time, the portal automatically:
 
-1. **Creates an Azure AD Security Group** named `{GroupNamePrefix}{AppName}-Required`
+1. **Creates an Entra ID Security Group** named `{GroupNamePrefix}{AppName}-Required`
    - Example: `AppPortal-Microsoft Teams-Required`
    - The prefix is configurable in Settings (default: `AppPortal-`)
 
@@ -525,7 +525,7 @@ Click **Edit** on any app row to open the Edit App Modal, which provides access 
 | Field | Description |
 |-------|-------------|
 | **Assignment Type** | User (add requester to group) or Device (add requester's device to group) |
-| **Target Group** | Azure AD security group for app assignment. Click "Search Groups" to browse, or use "Clear" to remove. |
+| **Target Group** | Entra ID security group for app assignment. Click "Search Groups" to browse, or use "Clear" to remove. |
 | **Assignment Filter** | Optional Intune assignment filter. Select filter type (Include/Exclude) and choose a filter. |
 
 #### Win32 Deployment Options Section
@@ -544,7 +544,7 @@ Click **Save** to apply changes or **Cancel** to discard.
 
 #### Assignment Type
 
-Determines what gets added to the Azure AD group when a request is approved:
+Determines what gets added to the Entra ID group when a request is approved:
 
 - **User**: The requesting user is added to the group (most common)
 - **Device**: The user's device is added to the group (useful for device-targeted deployments)
@@ -682,6 +682,46 @@ Users can request apps in two ways:
 
 Users can view their request history by clicking **My Requests** in the navigation. This shows all requests they've submitted with current status.
 
+### Request New App
+
+Users can request apps that aren't in the catalog by clicking the **+ Request New App** button on the Browse Apps page.
+
+#### How It Works
+
+1. User fills out the form with app name, publisher, description, and optional download URL
+2. The portal sends an email notification to **all members of the Admin Group**
+3. The email includes:
+   - Requestor name and email
+   - App name and publisher
+   - Business justification provided by the user
+   - Download URL (if provided)
+   - Suggestions for how to add the app (Winget catalog or manual upload)
+4. The request is logged in the audit trail
+
+#### Admin Actions
+
+When you receive a new app request email:
+
+1. **Evaluate the request**: Is this app appropriate for your organization?
+2. **Find the app**:
+   - Check the Winget Catalog in Admin Dashboard for easy publishing
+   - Search for the app in Intune if it's already available
+   - Download from the vendor if needed
+3. **Add to portal**:
+   - Use Winget Catalog to publish directly to Intune, or
+   - Manually add the app to Intune and sync
+4. **Configure visibility**: Make the app visible in the portal
+5. **Notify the user**: Reply to the email or notify the user directly
+
+#### Configuration
+
+The Request New App feature uses your existing email notification settings:
+
+- **Admin Group**: Members receive the notification emails
+- **Email Settings**: Uses the same `Mail.Send` configuration as other notifications
+
+No additional configuration is required. If email notifications are disabled, the feature will return an error to the user.
+
 ## Reports & Analytics
 
 The Admin Dashboard includes comprehensive reporting capabilities to help you understand app request patterns and deployment status.
@@ -813,6 +853,67 @@ The **By Person** tab allows you to search for a specific user and view all thei
 2. View their complete request history
 3. See status, install status, and timestamps for each request
 4. Use the **Retry** button on failed requests to re-attempt group membership
+
+### Audit Trail
+
+The **Audit Trail** tab provides a comprehensive log of all portal activity for compliance and security monitoring.
+
+#### Accessing the Audit Trail
+
+1. Go to **Admin** > **Reports** section
+2. Click the **Audit Trail** button in the report navigation
+3. Use filters to narrow down results
+
+#### Available Filters
+
+| Filter | Description |
+|--------|-------------|
+| **Search** | Free-text search across user email, action, entity, and details |
+| **Action Type** | Filter by specific action (e.g., Request.Submitted, App.Suggested) |
+| **Entity Type** | Filter by entity type (e.g., Request, App, Settings) |
+| **Start Date** | Show events from this date onwards |
+| **End Date** | Show events up to this date |
+
+#### Audit Log Information
+
+Each audit entry includes:
+
+| Field | Description |
+|-------|-------------|
+| **Timestamp** | When the action occurred |
+| **User** | Email address of the user who performed the action |
+| **Action** | The type of action performed |
+| **Entity Type** | The type of object affected |
+| **Entity ID** | Identifier of the affected object |
+| **Details** | Additional context (varies by action type) |
+| **IP Address** | The IP address of the user |
+
+#### Common Actions Logged
+
+| Action | Description |
+|--------|-------------|
+| `Request.Submitted` | User submitted an app request |
+| `Request.Approved` | Approver approved a request |
+| `Request.Rejected` | Approver rejected a request |
+| `Request.Completed` | Request was fulfilled (user added to group) |
+| `App.Suggested` | User submitted a new app request via Request New App form |
+| `Settings.Updated` | Admin changed portal settings |
+| `Apps.Synced` | Admin synced apps from Intune |
+
+#### Exporting Audit Logs
+
+1. Apply any desired filters
+2. Click the **Export CSV** button
+3. A CSV file downloads with all matching audit entries
+4. Use this for compliance reporting or external analysis
+
+#### Audit Log Retention
+
+Audit logs are stored indefinitely in the SQL database. There is no automatic purge. For organizations with high volume, consider:
+
+- Periodic export to long-term storage
+- Database scaling if performance is affected
+- Custom retention policies via direct database management
 
 ## Best Practices
 
@@ -1076,6 +1177,54 @@ ALTER INDEX [IX_AppRequests_UserId] ON [AppRequests] REBUILD;
 ```
 
 However, for the App Request Portal's typical data volumes (hundreds to thousands of app requests), this manual intervention is almost never necessary.
+
+## Disaster Recovery & Backups
+
+The App Request Portal includes built-in disaster recovery features to protect your data.
+
+### What's Automatically Protected
+
+| Component | Protection | Recovery |
+|-----------|------------|----------|
+| **SQL Database** | Automated backups (7-day PITR) + geo-redundant storage | Restore to any point in time |
+| **Storage Account** | Geo-redundant (GRS) with 6 copies across 2 regions | Automatic failover available |
+| **Key Vault Secrets** | Soft delete (7-day recovery) | Recover deleted secrets |
+| **Application Code** | GitHub repository + immutable release packages | Redeploy from ARM template |
+
+### Quick Recovery Actions
+
+**Restore deleted data (SQL):**
+```bash
+az sql db restore --resource-group <rg> --server <server> \
+  --name AppRequestPortal --dest-name AppRequestPortal-Restored \
+  --time "2026-02-14T10:00:00Z"
+```
+
+**Recover deleted Key Vault secret:**
+```bash
+az keyvault secret recover --vault-name <vault> --name AzureAdClientSecret
+```
+
+**Rollback to previous app version:**
+```bash
+az webapp config appsettings set --resource-group <rg> --name <app> \
+  --settings WEBSITE_RUN_FROM_PACKAGE="https://github.com/PowerStacks-BI/App-Request-Portal-Releases/releases/download/v1.5.5/AppRequestPortal.zip"
+```
+
+### High Availability (Optional)
+
+For organizations requiring higher uptime, see the [Disaster Recovery Guide](DISASTER-RECOVERY.md) for:
+- SQL Active Geo-Replication setup
+- Traffic Manager / Azure Front Door configuration
+- Multi-region deployment patterns
+
+### Monthly Backup Verification
+
+We recommend testing your recovery capability monthly:
+1. Restore SQL database to a point 24 hours ago (test environment)
+2. Verify data integrity
+3. Delete test database
+4. Document actual recovery time
 
 ## Troubleshooting
 

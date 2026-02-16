@@ -9,7 +9,7 @@ This document provides a detailed overview of the App Request Portal architectur
 │                         Azure Cloud                              │
 │                                                                   │
 │  ┌──────────────┐         ┌──────────────┐                      │
-│  │   Azure AD   │◄────────┤   Frontend   │                      │
+│  │   Entra ID   │◄────────┤   Frontend   │                      │
 │  │              │         │  (React SPA) │                      │
 │  └──────┬───────┘         └──────┬───────┘                      │
 │         │                        │                               │
@@ -47,7 +47,7 @@ This document provides a detailed overview of the App Request Portal architectur
 
 **Key Features**:
 - Single-page application for optimal performance
-- Azure AD authentication with SSO
+- Entra ID authentication with SSO
 - Responsive design for desktop and mobile
 - Real-time status updates for app requests
 
@@ -194,7 +194,7 @@ CREATE TABLE PortalSettings (
 
 **Purpose**:
 - Retrieve apps from Intune
-- Manage Azure AD groups
+- Manage Entra ID groups
 - Add/remove users and devices from groups
 - Get user information and manager hierarchy
 
@@ -284,9 +284,9 @@ Both services are optional and can be enabled/disabled independently in Admin Se
 
 ```
 1. User visits frontend
-2. MSAL redirects to Azure AD login
+2. MSAL redirects to Entra ID login
 3. User authenticates
-4. Azure AD returns ID token and access token
+4. Entra ID returns ID token and access token
 5. Frontend stores tokens in session storage
 6. Frontend includes access token in API requests
 7. API validates JWT token
@@ -302,9 +302,9 @@ Both services are optional and can be enabled/disabled independently in Admin Se
 ### Security Features
 
 1. **HTTPS Only**: All communication encrypted in transit
-2. **JWT Authentication**: Stateless authentication with Azure AD
+2. **JWT Authentication**: Stateless authentication with Entra ID
 3. **RBAC**: Role-based access control for granular permissions
-4. **Conditional Access**: Integration with Azure AD Conditional Access policies
+4. **Conditional Access**: Integration with Entra ID Conditional Access policies
 5. **Managed Identity**: Service-to-service authentication without secrets
 6. **Key Vault**: Secure storage of secrets and certificates
 7. **Audit Logging**: Complete audit trail of all actions
@@ -381,24 +381,65 @@ _logger.LogError(
 
 ## Disaster Recovery
 
-### Backup Strategy
+The default deployment includes Tier 2 disaster recovery capabilities with geo-redundant backups across Azure regions.
 
-- **Database**: Automated backups with point-in-time restore
-- **Configuration**: Infrastructure as Code (Bicep) for quick recovery
-- **Secrets**: Azure Key Vault with soft delete enabled
+### Built-in Protection (Default)
 
-### High Availability
+| Component | Protection | RPO | RTO |
+|-----------|------------|-----|-----|
+| **SQL Database** | Automated backups + geo-redundant storage | 5 min | 1-2 hours |
+| **Storage Account** | Geo-redundant (GRS) - 6 copies across 2 regions | 0 | 1-2 hours |
+| **Key Vault** | Soft delete (7-day recovery window) | 0 | 15 min |
+| **Application** | GitHub releases + ARM template | 0 | 30 min |
 
-- **Multi-region deployment**: Deploy to multiple Azure regions
-- **Traffic Manager**: Automatic failover between regions
-- **Database replication**: Geo-replication for SQL Database
+### Backup Details
+
+- **SQL Point-in-Time Restore**: 7 days (Basic tier), up to 35 days (Standard+)
+- **SQL Geo-Backup**: Cross-region backup for regional disaster recovery
+- **Storage GRS**: Synchronous replication to paired Azure region
+- **Key Vault Soft Delete**: 7-day retention for accidental deletion recovery
+
+### High Availability Options (Tier 3)
+
+For organizations requiring higher uptime, these can be configured manually:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Traffic Manager                           │
+│                  (DNS-based failover)                        │
+└──────────────────────┬───────────────────┬──────────────────┘
+                       │                   │
+           ┌───────────▼───────┐ ┌────────▼────────┐
+           │   Primary Region  │ │ Secondary Region │
+           │  ┌─────────────┐  │ │ ┌─────────────┐  │
+           │  │ App Service │  │ │ │ App Service │  │
+           │  └──────┬──────┘  │ │ └──────┬──────┘  │
+           │         │         │ │        │         │
+           │  ┌──────▼──────┐  │ │ ┌──────▼──────┐  │
+           │  │  SQL (R/W)  │←─┼─┼─┤ SQL (Read)  │  │
+           │  └─────────────┘  │ │ └─────────────┘  │
+           └───────────────────┘ └─────────────────┘
+                 Active              Standby
+```
+
+- **SQL Active Geo-Replication**: ~$5/month (Basic replica)
+- **Traffic Manager**: ~$0.75/million queries
+- **Secondary App Service**: ~$55/month (B2)
+
+### Recovery Procedures
+
+See the [Disaster Recovery Guide](DISASTER-RECOVERY.md) for detailed runbooks covering:
+- Accidental data deletion recovery
+- Key Vault secret recovery
+- Complete region failure recovery
+- Application rollback procedures
 
 ## Admin Features
 
 ### Setup Wizard
 A guided setup wizard helps administrators configure the portal on first use:
 1. **License** - Enter and validate PowerStacks license key
-2. **Access Groups** - Configure admin and approver Azure AD groups
+2. **Access Groups** - Configure admin and approver Entra ID groups
 3. **Email Notifications** - Set up email sender identity and notification preferences
 4. **Sync Apps** - Import apps from Intune catalog
 
