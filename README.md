@@ -28,12 +28,16 @@ The deployment creates the following Azure resources:
 |----------|------|----------|---------|
 | App Service Plan | `Microsoft.Web/serverfarms` | B2 Basic | Hosts the web application |
 | Web App | `Microsoft.Web/sites` | Linux, .NET 8 | The App Request Portal application |
+| Azure Key Vault | `Microsoft.KeyVault/vaults` | Standard | Secure secret storage |
 | SQL Server | `Microsoft.Sql/servers` | - | Database server |
-| SQL Database | `Microsoft.Sql/servers/databases` | Basic (5 DTU) | Application data storage |
+| SQL Database | `Microsoft.Sql/servers/databases` | Basic (5 DTU) | Application data storage with geo-redundant backups |
+| Storage Account | `Microsoft.Storage/storageAccounts` | Standard GRS | Geo-redundant Queue and Blob storage for Winget packaging |
 | Application Insights | `Microsoft.Insights/components` | - | Application monitoring and logging |
 | Log Analytics Workspace | `Microsoft.OperationalInsights/workspaces` | PerGB2018 | Centralized logging |
 
-**Estimated Monthly Cost**: ~$50-80 USD (varies by region and usage)
+**Estimated Monthly Cost**: ~$200-300 USD (varies by region and usage)
+
+> **Cost Details**: This includes B2 App Service Plan ($150-220/month), SQL Database with geo-redundant backups ($20-30/month), geo-redundant Storage Account ($10/month), Key Vault ($2-10/month), and Application Insights (pay-as-you-go, ~$10-20/GB ingested). Production deployments may require Standard or Premium tier App Service for higher availability.
 
 > **Note**: You can scale the App Service Plan and SQL Database up or down after deployment based on your organization's needs.
 
