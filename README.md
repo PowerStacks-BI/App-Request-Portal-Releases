@@ -69,6 +69,7 @@ The deployment creates the following Azure resources:
 - **Intune Install Status Tracking** - Real-time deployment status monitoring (Pending, Installing, Installed, Failed)
 - **Dashboard Charts & Trends** - Visualize request patterns, top apps, and completion trends over time
 - **ROI Calculator** - Quantify help desk cost savings with automated app deployment
+- **Chargeback Tracking** - Track app costs with cost center codes and PO numbers for departmental billing
 - **Detailed Reports** - Export analytics by app, user, approval activity, and installation status
 - **Application Insights Integration** - Performance metrics, error tracking, and usage analytics
 
