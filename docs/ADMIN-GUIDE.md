@@ -312,12 +312,34 @@ The portal supports one-click updates directly from the Admin Dashboard. This fe
 
 #### Manual Updates
 
-If auto-update is not configured, you can still update by redeploying from the [releases repository](https://github.com/PowerStacks-BI/App-Request-Portal-Releases):
+If auto-update is not configured, you can manually update using either method below:
 
-1. Go to the releases repository
+**Method 1: Kudu ZIP Deploy (Recommended for existing installations)**
+
+For existing deployments, use the Kudu ZIP deployment feature:
+
+1. Go to the [releases repository](https://github.com/PowerStacks-BI/App-Request-Portal-Releases/releases)
+2. Download the latest `AppRequestPortal-X.X.X.zip` file (not the source code)
+3. In Azure Portal, navigate to your App Service
+4. Click **Advanced Tools** → **Go** (opens Kudu)
+5. Click **Tools** → **Zip Push Deploy**
+6. Drag and drop the downloaded ZIP file into the deployment area
+7. Wait for deployment to complete (watch the logs)
+8. Restart your App Service if needed
+9. Database migrations will run automatically on next startup
+
+> **Note:** This method preserves your existing configuration and database. The ZIP contains only application files.
+
+**Method 2: Deploy to Azure Button (New installations only)**
+
+For fresh installations on an empty resource group:
+
+1. Go to the [releases repository](https://github.com/PowerStacks-BI/App-Request-Portal-Releases)
 2. Click the **Deploy to Azure** button
-3. Use the same resource group and settings as your original deployment
-4. The ARM template will update the existing deployment with the latest version
+3. Select an **empty resource group** or create a new one
+4. Configure deployment parameters
+
+> **Important:** The Deploy to Azure button will fail on resource groups containing existing resources. Use Method 1 for existing deployments.
 
 ### License Management
 
