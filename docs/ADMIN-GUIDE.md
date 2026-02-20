@@ -466,6 +466,15 @@ The App Management tab is your central hub for managing which Intune apps are av
 3. Apps are imported with their name, publisher, description, icon, and category
 4. New apps are hidden by default - you must make them visible for users to see them
 
+**Incremental Sync:** After the first full sync, subsequent syncs are incremental — only new and modified apps are fetched from Intune. The portal tracks the last sync date and uses `lastModifiedDateTime` filtering to minimize Graph API calls. Icons are fetched in parallel (5 concurrent requests) for faster sync times.
+
+**Scheduled Background Sync:** A background service automatically syncs apps on a schedule:
+- **Nightly full sync** at 2:00 AM UTC — catches deletions and ensures consistency
+- **Hourly incremental sync** — picks up new and changed apps quickly
+- The manual **Sync Apps from Intune** button is still available for on-demand syncs
+
+**Pagination:** The portal follows `@odata.nextLink` pagination from the Graph API, so tenants with more than 999 apps are fully supported.
+
 ### App Table Columns
 
 | Column | Description |
@@ -591,6 +600,13 @@ These options appear only for Win32 apps and control Intune deployment behavior:
 | **Restart Grace Period** | Enable/configure grace period before forced restart |
 
 Click **Save** to apply changes or **Cancel** to discard.
+
+#### App Icon
+
+Each app displays an icon in the catalog. Icons are typically synced from Intune, but some apps may be missing icons. The Edit App modal provides two ways to set an icon:
+
+- **Upload Icon** — Upload a PNG or JPEG image file from your computer
+- **Browse Library** — Opens the Icon Library picker, which shows all unique icons already used by other apps in the portal. Search by app name or publisher, then click an icon to apply it instantly. This is useful when multiple apps share the same publisher icon or when you want to reuse an existing icon without re-uploading.
 
 #### Assignment Type
 
